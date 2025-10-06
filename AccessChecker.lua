@@ -3,7 +3,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local TextChatService = game:GetService("TextChatService")
 
--- ลิงก์ GitHub สาธารณะ (แก้ไขเป็น /main)
+-- ลิงก์ GitHub สาธารณะ
 local vipUrl = "https://raw.githubusercontent.com/wino444/CommandSystem/main/NameVIP.lua"
 local ownerUrl = "https://raw.githubusercontent.com/wino444/CommandSystem/main/NameOwner.lua"
 local selfCommandsUrl = "https://raw.githubusercontent.com/wino444/CommandSystem/main/SelfCommands.lua"
@@ -27,9 +27,16 @@ local function loadScript(url)
         return game:HttpGet(url)
     end)
     if success then
+        print("Successfully fetched script from " .. url)
         local successLoad, compiled = pcall(loadstring, response)
         if successLoad then
-            return compiled()
+            if type(compiled) == "function" then
+                print("Successfully compiled script from " .. url)
+                return compiled()
+            else
+                warn("Error: Script from " .. url .. " did not return a function")
+                return nil
+            end
         else
             warn("Error compiling script from " .. url .. ": " .. compiled)
             return nil
@@ -45,15 +52,23 @@ local vipData = loadScript(vipUrl)
 local ownerData = loadScript(ownerUrl)
 getgenv().vipData = vipData or { vip = {}, moderator = {} } -- เก็บใน global environment
 getgenv().ownerData = ownerData or {} -- เก็บใน global environment
+print("VIP data loaded: ", getgenv().vipData)
+print("Owner data loaded: ", getgenv().ownerData)
 
 -- เพิ่ม timer รีโหลดทุก 2 นาที (120 วินาที)
 spawn(function()
     while true do
         wait(120) -- รอ 2 นาที
         local success, newVipData = pcall(loadScript, vipUrl)
-        if success then getgenv().vipData = newVipData or getgenv().vipData end
+        if success then 
+            getgenv().vipData = newVipData or getgenv().vipData 
+            print("Reloaded VIP data: ", getgenv().vipData)
+        end
         local success, newOwnerData = pcall(loadScript, ownerUrl)
-        if success then getgenv().ownerData = newOwnerData or getgenv().ownerData end
+        if success then 
+            getgenv().ownerData = newOwnerData or getgenv().ownerData 
+            print("Reloaded Owner data: ", getgenv().ownerData)
+        end
         print("Reloaded VIP and Owner data")
     end
 end)
@@ -179,6 +194,7 @@ end
 
 -- ฟังก์ชันหลักสำหรับเรียกใช้
 local function checkAccess(playerName)
+    print("Checking access for player: " .. playerName)
     local level, levelName, levels, isProtected, allowAll = getPlayerLevel(playerName)
     if level == 0 then
         print(playerName .. " has access: Invalid name (0)")
@@ -193,11 +209,13 @@ local function checkAccess(playerName)
 
     -- เก็บระดับของผู้เล่นใน getgenv() เพื่อใช้ใน SelfCommands.lua
     getgenv().playerLevel = level
+    print("Set playerLevel for " .. playerName .. ": " .. level)
 
     -- โหลดสคริปต์คำสั่งทั้งสองไฟล์
     local commandHandler = nil
     local selfCommands = loadScript(selfCommandsUrl)
     if selfCommands then
+        print("Executing SelfCommands.lua")
         selfCommands()
         print("Loaded SelfCommands.lua")
     else
@@ -205,6 +223,7 @@ local function checkAccess(playerName)
     end
     local otherCommands = loadScript(otherCommandsUrl)
     if otherCommands then
+        print("Executing OtherCommands.lua")
         commandHandler = function(callerName, targetName, command, action)
             return executeCommand(callerName, targetName, command, action)
         end
