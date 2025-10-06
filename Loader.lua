@@ -1,10 +1,21 @@
 -- Loader.lua
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local LocalPlayer = Players.LocalPlayer
 
--- ลิงก์ GitHub สาธารณะสำหรับ AccessChecker.lua
-local accessCheckerUrl = "https://raw.githubusercontent.com/wino444/CommandSystem/refs/heads/main/AccessChecker.lua"
+-- ฟังก์ชันส่งข้อความ (เก็บไว้เผื่ออนาคต)
+--[[
+local function sendMessage(msg)
+    local channel = TextChatService:FindFirstChild("TextChannels") and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+    if channel then
+        channel:SendAsync(msg)
+    else
+        warn("❌ ไม่พบแชนเนล RBXGeneral")
+    end
+end
+--]]
 
--- ฟังก์ชันโหลดไฟล์
 local function loadScript(url)
     local success, response = pcall(function()
         return HttpService:GetAsync(url)
@@ -17,26 +28,10 @@ local function loadScript(url)
     end
 end
 
--- โหลด AccessChecker.lua
-local checkAccess = loadScript(accessCheckerUrl)
-if not checkAccess then
-    error("Failed to load AccessChecker.lua")
-end
-
--- ตัวอย่างการใช้งาน
-local playerName = "FEwino444" -- เปลี่ยนเป็นชื่อผู้เล่นที่ต้องการตรวจสอบ
-local level, levelName = checkAccess(playerName)
-
--- ใช้ระดับสิทธิ์ในระบบ (ตัวอย่าง)
-if level == 3 then
-    print(playerName .. " can use owner commands!")
-elseif level == 2 then
-    print(playerName .. " can use VIP commands!")
+local accessChecker = loadScript("https://raw.githubusercontent.com/wino444/CommandSystem/refs/heads/main/AccessChecker.lua")
+if accessChecker then
+    accessChecker(LocalPlayer.Name)
+    print("AccessChecker loaded and executed for " .. LocalPlayer.Name)
 else
-    print(playerName .. " can use general commands only.")
+    warn("Failed to load AccessChecker.lua")
 end
-
--- ทดสอบเพิ่มเติม
-checkAccess("euiivdyj") -- ผล: euiivdyj has access: Owner (3)
-checkAccess("FEwino444") -- ผล: FEwino444 is in VIP (2) and Owner (3), using Owner (3)
-checkAccess("UnknownPlayer") -- ผล: UnknownPlayer has access: General (1)
