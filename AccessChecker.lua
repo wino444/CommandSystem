@@ -3,6 +3,9 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local TextChatService = game:GetService("TextChatService")
 
+-- ตัวแปรควบคุมโหมดดีบัก
+local debugcheckAccess = true -- เปิดโหมดดีบัก (จริง/เท็จ)
+
 -- ลิงก์ GitHub สาธารณะ
 local vipUrl = "https://raw.githubusercontent.com/wino444/CommandSystem/main/NameVIP.lua"
 local ownerUrl = "https://raw.githubusercontent.com/wino444/CommandSystem/main/NameOwner.lua"
@@ -23,26 +26,27 @@ end
 
 -- ฟังก์ชันโหลดไฟล์
 local function loadScript(url)
+    local fileName = url:match("([^/]+%.lua)$") or url -- ดึงชื่อไฟล์จาก URL
     local success, response = pcall(function()
         return game:HttpGet(url)
     end)
     if success then
-        print("Successfully fetched script from " .. url)
+        print("Successfully fetched script from " .. fileName)
         local successLoad, compiled = pcall(loadstring, response)
         if successLoad then
             if type(compiled) == "function" then
-                print("Successfully compiled script from " .. url)
+                print("Successfully compiled script from " .. fileName)
                 return compiled()
             else
-                warn("Error: Script from " .. url .. " did not return a function")
+                warn("Error: Script from " .. fileName .. " did not return a function")
                 return nil
             end
         else
-            warn("Error compiling script from " .. url .. ": " .. compiled)
+            warn("Error compiling script from " .. fileName .. ": " .. compiled)
             return nil
         end
     else
-        warn("Error loading " .. url .. ": " .. response)
+        warn("Error loading " .. fileName .. ": " .. response)
         return nil
     end
 end
@@ -52,8 +56,10 @@ local vipData = loadScript(vipUrl)
 local ownerData = loadScript(ownerUrl)
 getgenv().vipData = vipData or { vip = {}, moderator = {} } -- เก็บใน global environment
 getgenv().ownerData = ownerData or {} -- เก็บใน global environment
-print("VIP data loaded: ", getgenv().vipData)
-print("Owner data loaded: ", getgenv().ownerData)
+if debugcheckAccess then
+    print("VIP data loaded: ", getgenv().vipData)
+    print("Owner data loaded: ", getgenv().ownerData)
+end
 
 -- เพิ่ม timer รีโหลดทุก 2 นาที (120 วินาที)
 spawn(function()
@@ -62,14 +68,20 @@ spawn(function()
         local success, newVipData = pcall(loadScript, vipUrl)
         if success then 
             getgenv().vipData = newVipData or getgenv().vipData 
-            print("Reloaded VIP data: ", getgenv().vipData)
+            if debugcheckAccess then
+                print("Reloaded VIP data: ", getgenv().vipData)
+            end
         end
         local success, newOwnerData = pcall(loadScript, ownerUrl)
         if success then 
             getgenv().ownerData = newOwnerData or getgenv().ownerData 
-            print("Reloaded Owner data: ", getgenv().ownerData)
+            if debugcheckAccess then
+                print("Reloaded Owner data: ", getgenv().ownerData)
+            end
         end
-        print("Reloaded VIP and Owner data")
+        if debugcheckAccess then
+            print("Reloaded VIP and Owner data")
+        end
     end
 end)
 
@@ -188,49 +200,71 @@ local function executeCommand(callerName, targetName, command, action)
 
     -- ดำเนินการคำสั่ง (กรณี 2)
     action()
-    print(callerName .. " used command '" .. command .. "' on " .. targetName .. " successfully")
+    if debugcheckAccess then
+        print(callerName .. " used command '" .. command .. "' on " .. targetName .. " successfully")
+    end
     return true, "Command executed"
 end
 
 -- ฟังก์ชันหลักสำหรับเรียกใช้
 local function checkAccess(playerName)
-    print("Checking access for player: " .. playerName)
+    if debugcheckAccess then
+        print("Checking access for player: " .. playerName)
+    end
     local level, levelName, levels, isProtected, allowAll = getPlayerLevel(playerName)
     if level == 0 then
-        print(playerName .. " has access: Invalid name (0)")
+        if debugcheckAccess then
+            print(playerName .. " has access: Invalid name (0)")
+        end
         return level, levelName, isProtected, nil
     end
     local levelText = table.concat(levels, " and ")
-    if #levels > 1 then
-        print(playerName .. " is in " .. levelText .. ", using " .. levelName .. " (" .. level .. ")" .. (isProtected and " [protected]" or " [noprotected]") .. (allowAll and " [allow_all]" or ""))
-    else
-        print(playerName .. " has access: " .. levelName .. " (" .. level .. ")" .. (isProtected and " [protected]" or " [noprotected]") .. (allowAll and " [allow_all]" or ""))
+    if debugcheckAccess then
+        if #levels > 1 then
+            print(playerName .. " is in " .. levelText .. ", using " .. levelName .. " (" .. level .. ")" .. (isProtected and " [protected]" or " [noprotected]") .. (allowAll and " [allow_all]" or ""))
+        else
+            print(playerName .. " has access: " .. levelName .. " (" .. level .. ")" .. (isProtected and " [protected]" or " [noprotected]") .. (allowAll and " [allow_all]" or ""))
+        end
     end
 
     -- เก็บระดับของผู้เล่นใน getgenv() เพื่อใช้ใน SelfCommands.lua
     getgenv().playerLevel = level
-    print("Set playerLevel for " .. playerName .. ": " .. level)
+    if debugcheckAccess then
+        print("Set playerLevel for " .. playerName .. ": " .. level)
+    end
 
     -- โหลดสคริปต์คำสั่งทั้งสองไฟล์
     local commandHandler = nil
     local selfCommands = loadScript(selfCommandsUrl)
     if selfCommands then
-        print("Executing SelfCommands.lua")
+        if debugcheckAccess then
+            print("Executing SelfCommands.lua")
+        end
         selfCommands()
-        print("Loaded SelfCommands.lua")
+        if debugcheckAccess then
+            print("Loaded SelfCommands.lua")
+        end
     else
-        print("Failed to load SelfCommands.lua")
+        if debugcheckAccess then
+            print("Failed to load SelfCommands.lua")
+        end
     end
     local otherCommands = loadScript(otherCommandsUrl)
     if otherCommands then
-        print("Executing OtherCommands.lua")
+        if debugcheckAccess then
+            print("Executing OtherCommands.lua")
+        end
         commandHandler = function(callerName, targetName, command, action)
             return executeCommand(callerName, targetName, command, action)
         end
         otherCommands(commandHandler)
-        print("Loaded OtherCommands.lua")
+        if debugcheckAccess then
+            print("Loaded OtherCommands.lua")
+        end
     else
-        print("Failed to load OtherCommands.lua - VIP/Owner commands disabled")
+        if debugcheckAccess then
+            print("Failed to load OtherCommands.lua - VIP/Owner commands disabled")
+        end
     end
 
     return level, levelName, isProtected, commandHandler
