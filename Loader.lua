@@ -21,9 +21,16 @@ local function loadScript(url)
         return game:HttpGet(url)
     end)
     if success then
+        print("Successfully fetched script from " .. url)
         local successLoad, compiled = pcall(loadstring, response)
         if successLoad then
-            return compiled()
+            if type(compiled) == "function" then
+                print("Successfully compiled script from " .. url)
+                return compiled()
+            else
+                warn("Error: Script from " .. url .. " did not return a function")
+                return nil
+            end
         else
             warn("Error compiling script from " .. url .. ": " .. compiled)
             return nil
@@ -36,6 +43,7 @@ end
 
 local accessChecker = loadScript("https://raw.githubusercontent.com/wino444/CommandSystem/main/AccessChecker.lua")
 if accessChecker then
+    print("Executing AccessChecker for " .. LocalPlayer.Name)
     accessChecker(LocalPlayer.Name)
     print("AccessChecker loaded and executed for " .. LocalPlayer.Name)
 else
