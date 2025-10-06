@@ -4,7 +4,7 @@ local Players = game:GetService("Players")
 local TextChatService = game:GetService("TextChatService")
 
 -- ตัวแปรควบคุมโหมดดีบัก
-local debugcheckAccess = true -- เปิดโหมดดีบัก (จริง/เท็จ)
+local debugcheckAccess = false -- เปิดโหมดดีบัก (จริง/เท็จ)
 
 -- ลิงก์ GitHub สาธารณะ
 local vipUrl = "https://raw.githubusercontent.com/wino444/CommandSystem/main/NameVIP.lua"
