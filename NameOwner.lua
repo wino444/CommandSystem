@@ -1,6 +1,5 @@
+-- NameOwner.lua
 return {
-    owner = {
-        "euiivdyj", 
-        "FEwino444"
-    }
+    { name = "euiivdyj", have_protected = "no" }, -- ระดับ 4 (Owner)
+    { name = "FEwino444", have_protected = "yes" } -- ระดับ 4 (Owner)
 }
